@@ -17,7 +17,7 @@ export type VirtualScrollList<T> = {
     LastEntryHeight: number,
     Data: {T},
     Entries: {[number]: Types.ListEntry<T>},
-    StaleEntries: {Types.ListEntry<T>},
+    StaleEntries: {{LastIndex: number, Entry: Types.ListEntry<T>}},
     EventConnections: {RBXScriptConnection},
 } & typeof(setmetatable({}, VirtualScrollList))
 
@@ -41,7 +41,7 @@ function VirtualScrollList.new<T>(ScrollingFrame: ScrollingFrame, ListEntryConst
         EventConnections = {},
     }, VirtualScrollList) :: VirtualScrollList<T>
 
-    --Connect changes tot eh ScrollingFrame.
+    --Connect changes to the ScrollingFrame.
     table.insert(self.EventConnections, ScrollingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
         self:UpdateScrollingFrameContents()
     end))
@@ -66,11 +66,11 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
     local CanvasPosition = IsHorizontal and self.ScrollingFrame.CanvasPosition.X or self.ScrollingFrame.CanvasPosition.Y
     local WindowHeight = IsHorizontal and self.ScrollingFrame.AbsoluteWindowSize.X or self.ScrollingFrame.AbsoluteWindowSize.Y
     local EntryHeight = self.EntryHeight
-    local TotalEntries = math.ceil(WindowHeight / EntryHeight)
-    local AdditionalEntries = math.ceil(ADDITIONAL_ENTRIES_MULTIPLUER * TotalEntries)
+    local TotalDisplayEntries = math.ceil(WindowHeight / EntryHeight)
+    local AdditionalEntries = math.ceil(ADDITIONAL_ENTRIES_MULTIPLUER * TotalDisplayEntries)
     local BaseStartIndex = math.floor(CanvasPosition / EntryHeight)
     local StartIndex = math.max(0, BaseStartIndex - AdditionalEntries)
-    local EndIndex = math.min(#self.Data - 1, BaseStartIndex + TotalEntries + AdditionalEntries)
+    local EndIndex = math.min(#self.Data - 1, BaseStartIndex + TotalDisplayEntries + AdditionalEntries)
     
     --Remove entries that are out of range.
     --Entries are marked as stale but kept, 
@@ -88,7 +88,7 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
         if ResizeExistingEntries or i > #self.Data then
             Entry:Destroy()
         else
-            table.insert(self.StaleEntries, Entry)
+            table.insert(self.StaleEntries, {LastIndex = i, Entry = Entry})
         end
     end
     debug.profileend()
@@ -114,7 +114,7 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
         --Get and reuse a stale entry or create a new entry.
         local NewEntry = nil
         if #self.StaleEntries > 0 then
-            NewEntry = self.StaleEntries[#self.StaleEntries]
+            NewEntry = self.StaleEntries[#self.StaleEntries].Entry
             table.remove(self.StaleEntries, #self.StaleEntries)
             NewEntry:Update(Index, self.Data[Index])
         else
@@ -128,6 +128,17 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
         self.Entries[Index] = NewEntry
     end
     self.LastEntryHeight = EntryHeight
+    debug.profileend()
+
+    --Remove stale frames that are within the current view.
+    debug.profilebegin("VirtualScrollList.UpdateScrollingFrameContents.RemoveVisibleStaleFrames")
+    for i = #self.StaleEntries, 1, -1 do
+        local StaleEntry = self.StaleEntries[i]
+        local StaleEntryIndex = StaleEntry.LastIndex
+        if StaleEntryIndex - 1 < StartIndex or StaleEntryIndex - 1 > EndIndex then continue end
+        StaleEntry.Entry:Destroy()
+        table.remove(self.StaleEntries, i)
+    end
     debug.profileend()
     debug.profileend()
 end
@@ -163,7 +174,7 @@ function VirtualScrollList.SetEntryHeight<T>(self: VirtualScrollList<T>, EntryHe
     --Stale entries can't be guarenteed to be out of the way when scrolling using the new height.
     self.EntryHeight = EntryHeight
     for _, Entry in self.StaleEntries do
-        Entry:Destroy()
+        Entry.Entry:Destroy()
     end
     self.StaleEntries = {}
     
@@ -229,7 +240,7 @@ function VirtualScrollList.Destroy<T>(self: VirtualScrollList<T>): ()
     end
     self.Entries = {}
     for _, Entry in self.StaleEntries do
-        Entry:Destroy()
+        Entry.Entry:Destroy()
     end
     self.StaleEntries = {}
 end

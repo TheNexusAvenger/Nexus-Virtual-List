@@ -243,6 +243,44 @@ return function()
             expect(#TestVirtualScrollList.StaleEntries).to.equal(0)
         end)
 
+        it("should remove stale frames that become visible before reused.", function()
+            local TestData = {}
+            for i = 1, 100 do
+                table.insert(TestData, tostring(i))
+            end
+
+            TestVirtualScrollList:SetData(TestData)
+            expect(#TextLabels).to.equal(9)
+            expect(UpdateCalls).to.equal(9)
+            TestScrollingFrame.CanvasPosition = Vector2.new(0, 60)
+            TestVirtualScrollList:UpdateScrollingFrameContents()
+            expect(#TextLabels).to.equal(12)
+            expect(UpdateCalls).to.equal(12)
+            TestScrollingFrame.CanvasPosition = Vector2.new(0, 1900)
+            TestVirtualScrollList:UpdateScrollingFrameContents()
+            expect(#TextLabels).to.equal(12)
+            expect(UpdateCalls).to.equal(20)
+
+            TestScrollingFrame.CanvasPosition = Vector2.new(0, 0)
+            TestVirtualScrollList:UpdateScrollingFrameContents()
+            expect(#TextLabels).to.equal(12)
+            expect(UpdateCalls).to.equal(29)
+
+            local FramesInNewRange = 0
+            local ParentedFrames = 0
+            for i = 1, 12 do
+                if TextLabels[i].Parent then
+                    ParentedFrames += 1
+                    local Number = tonumber(string.match(TextLabels[i].Text, "%d+"))
+                    if Number <= 9 then
+                        FramesInNewRange += 1
+                    end
+                end
+            end
+            expect(FramesInNewRange).to.equal(9)
+            expect(ParentedFrames).to.equal(9)
+        end)
+
         it("should update the scroll width.", function()
             TestVirtualScrollList:SetData({"1", "2", "3"})
             TestVirtualScrollList:SetScrollWidth(UDim.new(1, 2))
