@@ -14,6 +14,7 @@ export type VirtualScrollList<T> = {
     Direction: Enum.ScrollingDirection,
     ScrollWidth: UDim,
     EntryHeight: number,
+    OverrideAdditionalEntries: number?,
     LastEntryHeight: number,
     Data: {T},
     Entries: {[number]: Types.ListEntry<T>},
@@ -67,7 +68,7 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
     local WindowHeight = IsHorizontal and self.ScrollingFrame.AbsoluteWindowSize.X or self.ScrollingFrame.AbsoluteWindowSize.Y
     local EntryHeight = self.EntryHeight
     local TotalDisplayEntries = math.ceil(WindowHeight / EntryHeight)
-    local AdditionalEntries = math.ceil(ADDITIONAL_ENTRIES_MULTIPLUER * TotalDisplayEntries)
+    local AdditionalEntries = self.OverrideAdditionalEntries or math.ceil(ADDITIONAL_ENTRIES_MULTIPLUER * TotalDisplayEntries)
     local BaseStartIndex = math.floor(CanvasPosition / EntryHeight)
     local StartIndex = math.max(0, BaseStartIndex - AdditionalEntries)
     local EndIndex = math.min(#self.Data - 1, BaseStartIndex + TotalDisplayEntries + AdditionalEntries)
@@ -93,11 +94,29 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
     end
     debug.profileend()
 
+    --Re-use stale entries if they became visible.
+    debug.profilebegin("VirtualScrollList.UpdateScrollingFrameContents.ReuseStaleFrames")
+    local EntrySize = (IsHorizontal and UDim2.new(0, EntryHeight, 1, 0) or UDim2.new(1, 0, 0, EntryHeight))
+    for i = #self.StaleEntries, 1, -1 do
+        local StaleEntry = self.StaleEntries[i]
+        local StaleEntryIndex = StaleEntry.LastIndex
+        if self.Entries[StaleEntryIndex] then continue end
+        if StaleEntryIndex - 1 < StartIndex or StaleEntryIndex - 1 > EndIndex then continue end
+        
+        local EntryPosition = (IsHorizontal and UDim2.new(0, (StaleEntryIndex - 1) * EntryHeight, 0, 0) or UDim2.new(0, 0, 0, (StaleEntryIndex - 1) * EntryHeight))
+        local ExistingEntry = StaleEntry.Entry
+        ExistingEntry.GuiInstance.Position = EntryPosition
+        ExistingEntry.GuiInstance.Size = EntrySize
+        ExistingEntry:Update(StaleEntryIndex, self.Data[StaleEntryIndex])
+        table.remove(self.StaleEntries, i)
+        self.Entries[StaleEntryIndex] = ExistingEntry
+    end
+    debug.profileend()
+
     --Create the new list entries.
     --As an optimization, entries don't need to be updated because they have been set before.
     --Only the size is changed for existing entries since the contents will be correct.
     debug.profilebegin("VirtualScrollList.UpdateScrollingFrameContents.UpdateContents")
-    local EntrySize = (IsHorizontal and UDim2.new(0, EntryHeight, 1, 0) or UDim2.new(1, 0, 0, EntryHeight))
     for i = StartIndex, EndIndex do
         --Resize the GUI instance if it was resized.
 		local Index = i + 1

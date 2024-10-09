@@ -148,6 +148,18 @@ return function()
             expect(TextLabels[4].Text).to.equal("4_4")
         end)
 
+        it("should respect OverrideAdditionalEntries.", function()
+            local TestData = {}
+            for i = 1, 100 do
+                table.insert(TestData, tostring(i))
+            end
+
+            TestVirtualScrollList.OverrideAdditionalEntries = 1
+            TestVirtualScrollList:SetData(TestData)
+            expect(#TextLabels).to.equal(7)
+            expect(UpdateCalls).to.equal(7)
+        end)
+
         it("should scroll.", function()
             local TestData = {}
             for i = 1, 100 do
@@ -243,7 +255,7 @@ return function()
             expect(#TestVirtualScrollList.StaleEntries).to.equal(0)
         end)
 
-        it("should remove stale frames that become visible before reused.", function()
+        it("should reuse stale frames that become visible.", function()
             local TestData = {}
             for i = 1, 100 do
                 table.insert(TestData, tostring(i))
@@ -267,6 +279,44 @@ return function()
             expect(UpdateCalls).to.equal(29)
 
             local FramesInNewRange = 0
+            for i = 1, 12 do
+                local Number = tonumber(string.match(TextLabels[i].Text, "%d+"))
+                if Number <= 9 then
+                    FramesInNewRange += 1
+                end
+            end
+            expect(FramesInNewRange).to.equal(9)
+        end)
+
+        it("should remove stale frames that become visible before reused.", function()
+            local TestData = {}
+            for i = 1, 100 do
+                table.insert(TestData, tostring(i))
+            end
+
+            TestVirtualScrollList:SetData(TestData)
+            expect(#TextLabels).to.equal(9)
+            expect(UpdateCalls).to.equal(9)
+            TestScrollingFrame.CanvasPosition = Vector2.new(0, 60)
+            TestVirtualScrollList:UpdateScrollingFrameContents()
+            expect(#TextLabels).to.equal(12)
+            expect(UpdateCalls).to.equal(12)
+
+            TestScrollingFrame.CanvasPosition = Vector2.new(0, 0)
+            TestVirtualScrollList:UpdateScrollingFrameContents()
+            expect(#TextLabels).to.equal(12)
+            expect(UpdateCalls).to.equal(12)
+
+            for i = 1, 3 do
+                table.insert(TestVirtualScrollList.StaleEntries, {
+                    LastIndex = i,
+                    Entry = TestVirtualScrollList.ListEntryConstructor(i, tostring(i)),
+                })
+            end
+            expect(#TextLabels).to.equal(15)
+            expect(UpdateCalls).to.equal(15)
+
+            local FramesInNewRange = 0
             local ParentedFrames = 0
             for i = 1, 12 do
                 if TextLabels[i].Parent then
@@ -278,7 +328,7 @@ return function()
                 end
             end
             expect(FramesInNewRange).to.equal(9)
-            expect(ParentedFrames).to.equal(9)
+            expect(ParentedFrames).to.equal(12)
         end)
 
         it("should update the scroll width.", function()
