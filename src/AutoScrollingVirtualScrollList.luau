@@ -1,6 +1,7 @@
 --Extendedd version of VirtualScrollList that automatically scrolls.
 --!strict
 
+local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
 
 local Types = require(script.Parent:WaitForChild("Types"))
@@ -139,8 +140,32 @@ The speed can be negative.
 --]]
 function AutoScrollingVirtualScrollList.StartAutoScrolling<T>(self: AutoScrollingVirtualScrollList<T>, Multiplier: number): ()
     self:StopAutoScrolling()
+
+    --Start the update loop.
+    local LastShiftTime: number? = nil
     self.AutoScrollEventConnection = RunService.Stepped:Connect(function(_, DeltaTime: number)
-        self:OffsetCanvasRelative(DeltaTime * Multiplier)
+        if GuiService.ReducedMotionEnabled then
+            --Set the last shift time if ReducedMotionEnabled was not run yet, and align the list.
+            local IsHorizontal = (self.VirtualScrollList.Direction == Enum.ScrollingDirection.X)
+            local EntryHeight = self.VirtualScrollList.EntryHeight
+            local WindowHeight = IsHorizontal and self.ScrollingFrame.AbsoluteWindowSize.X or self.ScrollingFrame.AbsoluteWindowSize.Y
+            if not LastShiftTime then
+                local CanvasPosition = IsHorizontal and self.ScrollingFrame.CanvasPosition.X or self.ScrollingFrame.CanvasPosition.Y
+                self:MoveCanvasToRelative(math.floor(CanvasPosition / EntryHeight))
+                LastShiftTime = tick()
+            end
+
+            --Shift the list if enough time has passed.
+            local VisibleEntries = math.floor(WindowHeight / EntryHeight)
+            if (tick() - LastShiftTime :: number) >= VisibleEntries / Multiplier then
+                self:OffsetCanvasRelative(VisibleEntries)
+                LastShiftTime = tick()
+            end
+        else
+            --Move the offset based on the frame time.
+            self:OffsetCanvasRelative(DeltaTime * Multiplier)
+            LastShiftTime = nil
+        end
     end)
 end
 

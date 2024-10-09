@@ -44,9 +44,11 @@ HorizontalScrollList:SetData(TestData)
 --Note: SetDataEntry is not supported.
 
 --For automatic scrolling, the following will scroll 2 entries per second.
+--This supports reduced motion internally.
 VerticalScrollList:StartAutoScrolling(2)
 
 --For manual scrolling, use MoveCanvasTo, MoveCanvasToRelative, OffsetCanvas, or OffsetCanvasRelative.
+--This does NOT support reduced motion. That has to be handled manually for your use case.
 local LastPosition = 0
 while true do
     local StartTime = tick()
