@@ -3,8 +3,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local NexusVirtualList = ReplicatedStorage:WaitForChild("NexusVirtualList")
-local NexusVirtualListTypes = require(NexusVirtualList:WaitForChild("Types"))
+local NexusVirtualList = require(ReplicatedStorage:WaitForChild("NexusVirtualList"))
 
 local TestListEntry = {}
 TestListEntry.__index = TestListEntry
@@ -18,14 +17,14 @@ export type TestListEntry = {
 --[[
 Creates a test list entry.
 --]]
-function TestListEntry.new(InitialIndex: number, InitialData: string): NexusVirtualListTypes.ListEntry<string>
+function TestListEntry.new(InitialIndex: number, InitialData: string): NexusVirtualList.ListEntry<string>
     local self = setmetatable({
         GuiInstance = Instance.new("TextLabel"),
     }, TestListEntry) :: TestListEntry
     self.GuiInstance.BackgroundTransparency = 0.5
     self.GuiInstance.TextScaled = true
     self:Update(InitialIndex, InitialData)
-    return (self :: any) :: NexusVirtualListTypes.ListEntry<string>
+    return (self :: any) :: NexusVirtualList.ListEntry<string>
 end
 
 --[[

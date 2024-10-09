@@ -22,7 +22,7 @@ export type AutoScrollingVirtualScrollList<T> = {
 --[[
 Creates an auto-scrolling virtual scroll list from an existing ScrollingFrame.
 --]]
-function AutoScrollingVirtualScrollList.new<T>(ScrollingFrame: ScrollingFrame, ListEntryConstructor: Types.ListEntryConstructor<T>, Direction: Enum.ScrollingDirection?): VirtualScrollList<T>
+function AutoScrollingVirtualScrollList.new<T>(ScrollingFrame: ScrollingFrame, ListEntryConstructor: Types.ListEntryConstructor<T>, Direction: Enum.ScrollingDirection?): AutoScrollingVirtualScrollList<T>
     --Create the initial object.
     local self = setmetatable({
         ScrollingFrame = ScrollingFrame,

@@ -4,8 +4,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local NexusVirtualList = ReplicatedStorage:WaitForChild("NexusVirtualList")
-local VirtualScrollList = require(NexusVirtualList:WaitForChild("VirtualScrollList"))
+local NexusVirtualList = require(ReplicatedStorage:WaitForChild("NexusVirtualList"))
 local TestListEntry = require(script.Parent:WaitForChild("TestListEntry"))
 
 
@@ -27,11 +26,11 @@ HorizontalScrollingFrame.Size = UDim2.new(0, 400, 0, 100)
 HorizontalScrollingFrame.Position = UDim2.new(0, 200, 0, 400)
 HorizontalScrollingFrame.Parent = ScreenGui
 
-local VerticalScrollList = VirtualScrollList.new(VerticalScrollingFrame, TestListEntry.new)
+local VerticalScrollList = NexusVirtualList.CreateVirtualScrollList(VerticalScrollingFrame, TestListEntry.new)
 --VerticalScrollList:SetScrollWidth(UDim.new(0, 300))
 VerticalScrollList:SetEntryHeight(24)
 
-local HorizontalScrollList = VirtualScrollList.new(HorizontalScrollingFrame, TestListEntry.new, Enum.ScrollingDirection.X)
+local HorizontalScrollList = NexusVirtualList.CreateVirtualScrollList(HorizontalScrollingFrame, TestListEntry.new, Enum.ScrollingDirection.X)
 --HorizontalScrollList:SetScrollWidth(UDim.new(0, 300))
 HorizontalScrollList:SetEntryHeight(50)
 
