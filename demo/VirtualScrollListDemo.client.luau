@@ -15,19 +15,30 @@ ScreenGui.Name = "VirtualScrollListDemo"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.BackgroundTransparency = 0.5
-ScrollingFrame.Size = UDim2.new(0, 200, 0, 300)
-ScrollingFrame.Position = UDim2.new(0, 200, 0, 50)
-ScrollingFrame.Parent = ScreenGui
+local VerticalScrollingFrame = Instance.new("ScrollingFrame")
+VerticalScrollingFrame.BackgroundTransparency = 0.5
+VerticalScrollingFrame.Size = UDim2.new(0, 200, 0, 300)
+VerticalScrollingFrame.Position = UDim2.new(0, 200, 0, 50)
+VerticalScrollingFrame.Parent = ScreenGui
 
-local ScrollList = VirtualScrollList.new(ScrollingFrame, TestListEntry.new)
---ScrollList:SetScrollWidth(UDim.new(0, 300))
-ScrollList:SetEntryHeight(24)
+local HorizontalScrollingFrame = Instance.new("ScrollingFrame")
+HorizontalScrollingFrame.BackgroundTransparency = 0.5
+HorizontalScrollingFrame.Size = UDim2.new(0, 400, 0, 100)
+HorizontalScrollingFrame.Position = UDim2.new(0, 200, 0, 400)
+HorizontalScrollingFrame.Parent = ScreenGui
+
+local VerticalScrollList = VirtualScrollList.new(VerticalScrollingFrame, TestListEntry.new)
+--VerticalScrollList:SetScrollWidth(UDim.new(0, 300))
+VerticalScrollList:SetEntryHeight(24)
+
+local HorizontalScrollList = VirtualScrollList.new(HorizontalScrollingFrame, TestListEntry.new, Enum.ScrollingDirection.X)
+--HorizontalScrollList:SetScrollWidth(UDim.new(0, 300))
+HorizontalScrollList:SetEntryHeight(50)
 
 local TestData = {}
 for i = 1, 1000 do
     table.insert(TestData, `Entry_{i}`)
 end
-ScrollList:SetData(TestData)
---To change 1 entry: ScrollList:SetDataEntry(i, "SomeValue")
+VerticalScrollList:SetData(TestData)
+HorizontalScrollList:SetData(TestData)
+--To change 1 entry: VerticalScrollList:SetDataEntry(i, "SomeValue")

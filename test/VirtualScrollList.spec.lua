@@ -159,6 +159,7 @@ return function()
             expect(UpdateCalls).to.equal(9)
             for i = 1, 9 do
                 expect(TextLabels[i].Text).to.equal(`{i}_{i}`)
+                expect(TextLabels[i].Position).to.equal(UDim2.new(0, 0, 0, (i - 1) * 20))
                 expect(TextLabels[i].Parent).to.never.equal(nil)
             end
 
@@ -267,6 +268,34 @@ return function()
                 end
             end
             expect(TotalParentedFrame).to.equal(7)
+        end)
+
+        it("should scroll horizontally.", function()
+            local TestData = {}
+            for i = 1, 100 do
+                table.insert(TestData, tostring(i))
+            end
+
+            TestVirtualScrollList.Direction = Enum.ScrollingDirection.X
+            TestVirtualScrollList:SetData(TestData)
+            expect(#TextLabels).to.equal(9)
+            expect(UpdateCalls).to.equal(9)
+            for i = 1, 9 do
+                expect(TextLabels[i].Text).to.equal(`{i}_{i}`)
+                expect(TextLabels[i].Position).to.equal(UDim2.new(0, (i - 1) * 20, 0, 0))
+                expect(TextLabels[i].Parent).to.never.equal(nil)
+            end
+
+            TestScrollingFrame.CanvasPosition = Vector2.new(400, 0)
+            TestVirtualScrollList:UpdateScrollingFrameContents()
+            expect(#TextLabels).to.equal(12)
+            expect(UpdateCalls).to.equal(9 + 12)
+            for i = 1, 12 do
+                local Number = tonumber(string.match(TextLabels[i].Text, "%d+"))
+                expect(Number >= 21 - 3).to.equal(true)
+                expect(Number <= 26 + 3).to.equal(true)
+                expect(TextLabels[i].Parent).to.never.equal(nil)
+            end
         end)
     end)
 end

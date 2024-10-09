@@ -11,6 +11,7 @@ VirtualScrollList.__index = VirtualScrollList
 export type VirtualScrollList<T> = {
     ListEntryConstructor: Types.ListEntryConstructor<T>,
     ScrollingFrame: ScrollingFrame,
+    Direction: Enum.ScrollingDirection,
     ScrollWidth: UDim,
     EntryHeight: number,
     LastEntryHeight: number,
@@ -25,12 +26,13 @@ export type VirtualScrollList<T> = {
 --[[
 Creates a virtual scroll list from an existing ScrollingFrame.
 --]]
-function VirtualScrollList.new<T>(ScrollingFrame: ScrollingFrame, ListEntryConstructor: Types.ListEntryConstructor<T>): VirtualScrollList<T>
+function VirtualScrollList.new<T>(ScrollingFrame: ScrollingFrame, ListEntryConstructor: Types.ListEntryConstructor<T>, Direction: Enum.ScrollingDirection?): VirtualScrollList<T>
     --Create the initial object.
     local self = setmetatable({
         ListEntryConstructor = ListEntryConstructor,
         ScrollingFrame = ScrollingFrame,
         ScrollWidth = UDim.new(0, 0),
+        Direction = Direction or Enum.ScrollingDirection.Y,
         EntryHeight = 20,
         LastEntryHeight = 20,
         Data = {},
@@ -60,12 +62,13 @@ Updates the contents of the ScrollingFrame.
 function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollList<T>): ()
     --Calculate the sizes for the entries.
     debug.profilebegin("VirtualScrollList.UpdateScrollingFrameContents")
-    local CanvasPositionY = self.ScrollingFrame.CanvasPosition.Y
-    local WindowHeightY = self.ScrollingFrame.AbsoluteWindowSize.Y
+    local IsHorizontal = (self.Direction == Enum.ScrollingDirection.X)
+    local CanvasPosition = IsHorizontal and self.ScrollingFrame.CanvasPosition.X or self.ScrollingFrame.CanvasPosition.Y
+    local WindowHeight = IsHorizontal and self.ScrollingFrame.AbsoluteWindowSize.X or self.ScrollingFrame.AbsoluteWindowSize.Y
     local EntryHeight = self.EntryHeight
-    local TotalEntries = math.ceil(WindowHeightY / EntryHeight)
+    local TotalEntries = math.ceil(WindowHeight / EntryHeight)
     local AdditionalEntries = math.ceil(ADDITIONAL_ENTRIES_MULTIPLUER * TotalEntries)
-    local BaseStartIndex = math.floor(CanvasPositionY / EntryHeight)
+    local BaseStartIndex = math.floor(CanvasPosition / EntryHeight)
     local StartIndex = math.max(0, BaseStartIndex - AdditionalEntries)
     local EndIndex = math.min(#self.Data - 1, BaseStartIndex + TotalEntries + AdditionalEntries)
     
@@ -94,14 +97,16 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
     --As an optimization, entries don't need to be updated because they have been set before.
     --Only the size is changed for existing entries since the contents will be correct.
     debug.profilebegin("VirtualScrollList.UpdateScrollingFrameContents.UpdateContents")
+    local EntrySize = (IsHorizontal and UDim2.new(0, EntryHeight, 1, 0) or UDim2.new(1, 0, 0, EntryHeight))
     for i = StartIndex, EndIndex do
         --Resize the GUI instance if it was resized.
 		local Index = i + 1
         local ExistingEntry = self.Entries[Index]
+        local EntryPosition = (IsHorizontal and UDim2.new(0, i * EntryHeight, 0, 0) or UDim2.new(0, 0, 0, i * EntryHeight))
         if ExistingEntry then
             if ResizeExistingEntries then
-                ExistingEntry.GuiInstance.Position = UDim2.new(0, 0, 0, i * EntryHeight)
-                ExistingEntry.GuiInstance.Size = UDim2.new(1, 0, 0, EntryHeight)
+                ExistingEntry.GuiInstance.Position = EntryPosition
+                ExistingEntry.GuiInstance.Size = EntrySize
             end
             continue
         end
@@ -118,8 +123,8 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
         end
 
         --Move the list entry.
-        NewEntry.GuiInstance.Position = UDim2.new(0, 0, 0, i * EntryHeight)
-        NewEntry.GuiInstance.Size = UDim2.new(1, 0, 0, EntryHeight)
+        NewEntry.GuiInstance.Position = EntryPosition
+        NewEntry.GuiInstance.Size = EntrySize
         self.Entries[Index] = NewEntry
     end
     self.LastEntryHeight = EntryHeight
@@ -131,7 +136,10 @@ end
 Updates the size of the ScrollingFrame canvas.
 --]]
 function VirtualScrollList.UpdateScrollingFrameSize<T>(self: VirtualScrollList<T>): ()
-    self.ScrollingFrame.CanvasSize = UDim2.new(self.ScrollWidth.Scale, self.ScrollWidth.Offset, 0, #self.Data * self.EntryHeight)
+    local IsHorizontal = (self.Direction == Enum.ScrollingDirection.X)
+    local ScrollingEntryWidth = UDim.new(self.ScrollWidth.Scale, self.ScrollWidth.Offset)
+    local ScrollingEntryHeight = UDim.new(0, #self.Data * self.EntryHeight)
+    self.ScrollingFrame.CanvasSize = UDim2.new(IsHorizontal and ScrollingEntryHeight or ScrollingEntryWidth, IsHorizontal and ScrollingEntryWidth or ScrollingEntryHeight)
 end
 
 --[[
