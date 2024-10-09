@@ -1,0 +1,25 @@
+{
+    "name": "Nexus-Virtual-List",
+    "tree": {
+        "$className": "DataModel",
+        "ReplicatedStorage": {
+            "$className": "ReplicatedStorage",
+            "NexusVirtualList": {
+                "$path": "."
+            }
+        },
+        "StarterPlayer": {
+            "$className": "StarterPlayer",
+            "StarterPlayerScripts": {
+                "$className": "StarterPlayerScripts",
+                "$path": "./demo"
+            }
+        },
+        "TestService": {
+            "$className": "TestService",
+            "NexusVirtualListTests": {
+                "$path": "./test"
+            }
+        }
+    }
+}
