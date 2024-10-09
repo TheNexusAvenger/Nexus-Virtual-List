@@ -9,6 +9,12 @@ Nexus Virtual List is not tied to any framework, unlike
 
 For use with React-Luau, consider [a Luau adaption of FlashList](https://github.com/Neura-Studios/flash-list-lua).
 
+## Limtations
+- Only horizontal and vertical lists are supported. Grids aren't supported.
+- While the list entries can have any contents based on the data, but
+  the entry class must be able to accept the data from any part of the list.
+- All of the list entriest must be the same, pre-defined size.
+
 ## Usage
 Examples can be found in the [`demo` folder](./demo/).
 
