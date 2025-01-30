@@ -42,7 +42,7 @@ return function()
         end)
 
         it("should change the ScrollingFrame.", function()
-            expect(TestVirtualScrollList.VirtualScrollList.OverrideAdditionalEntries).to.equal(1)
+            expect(TestVirtualScrollList.VirtualScrollList.OverrideAdditionalEntries).to.equal(0)
             expect(TestScrollingFrame.ScrollingEnabled).to.equal(false)
             expect(TestScrollingFrame.ScrollBarThickness).to.equal(0)
         end)

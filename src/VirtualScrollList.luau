@@ -71,7 +71,8 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
     local AdditionalEntries = self.OverrideAdditionalEntries or math.ceil(ADDITIONAL_ENTRIES_MULTIPLUER * TotalDisplayEntries)
     local BaseStartIndex = math.floor(CanvasPosition / EntryHeight)
     local StartIndex = math.max(0, BaseStartIndex - AdditionalEntries)
-    local EndIndex = math.min(#self.Data - 1, BaseStartIndex + TotalDisplayEntries + AdditionalEntries)
+    local MaxEndIndex = #self.Data - 1
+    local EndIndex = math.min(MaxEndIndex, BaseStartIndex + TotalDisplayEntries + AdditionalEntries)
     
     --Remove entries that are out of range.
     --Entries are marked as stale but kept, 
@@ -154,7 +155,7 @@ function VirtualScrollList.UpdateScrollingFrameContents<T>(self: VirtualScrollLi
     for i = #self.StaleEntries, 1, -1 do
         local StaleEntry = self.StaleEntries[i]
         local StaleEntryIndex = StaleEntry.LastIndex
-        if StaleEntryIndex - 1 < StartIndex or StaleEntryIndex - 1 > EndIndex then continue end
+        if StaleEntryIndex - 1 < StartIndex or (StaleEntryIndex - 1 > EndIndex and MaxEndIndex >= EndIndex) then continue end
         StaleEntry.Entry:Destroy()
         table.remove(self.StaleEntries, i)
     end
