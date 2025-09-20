@@ -42,6 +42,16 @@ function VirtualScrollList.new<T>(ScrollingFrame: ScrollingFrame, ListEntryConst
         EventConnections = {},
     }, VirtualScrollList) :: VirtualScrollList<T>
 
+    --Warn if a UILayout is found in the ScrollingFrame, since it breaks the frame management.
+    for _, ChildInstance in ScrollingFrame:GetChildren() do
+        if not ChildInstance:IsA("UILayout") then continue end
+        warn(`{ChildInstance.ClassName} at {ChildInstance:GetFullName()} child found in the ScrollingFrame being set up with VirtualScrollList. The layout will not appear as expected!\n{debug.traceback()}`)
+    end
+    table.insert(self.EventConnections, ScrollingFrame.ChildAdded:Connect(function(ChildInstance: Instance)
+        if not ChildInstance:IsA("UILayout") then return end
+        warn(`{ChildInstance.ClassName} at {ChildInstance:GetFullName()} child added to the ScrollingFrame set up with VirtualScrollList. The layout will not appear as expected!`)
+    end))
+
     --Connect changes to the ScrollingFrame.
     table.insert(self.EventConnections, ScrollingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
         self:UpdateScrollingFrameContents()
